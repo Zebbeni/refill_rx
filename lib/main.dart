@@ -1,7 +1,10 @@
 import 'dart:async';
 
+import 'package:duration/duration.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+
+import 'package:refill_rx/taper_duration_popup.dart';
 
 void main() => runApp(new MyApp());
 
@@ -10,11 +13,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Refill RX',
       theme: new ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Arial',
       ),
-      home: new MyHomePage(title: 'Refill Calculator'),
+      home: new MyHomePage(title: 'Refill RX'),
     );
   }
 }
@@ -32,6 +37,23 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime _datePrescribed = new DateTime.now();
   int _numberPrescribed = 0;
   double _dosePerDay = 0.0;
+  Taper _taper = new Taper(0, 0);
+
+  TextStyle _resultStyle() {
+    return TextStyle(
+      color: _numberRemaining() > 0 ? Colors.green : Colors.red,
+      fontWeight: FontWeight.bold,
+      fontSize: 22.0,
+    );
+  }
+
+  TextStyle _inputStyle() {
+    return TextStyle(
+      color: Colors.blue,
+      fontWeight: FontWeight.bold,
+      fontSize: 17.0,
+    );
+  }
 
   double _numberRemaining() {
     int daysPassed = new DateTime.now().difference(_datePrescribed).inDays;
@@ -39,7 +61,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String _dateString(DateTime dateTime) {
-    return DateFormat.yMMMMd("en_US").format(_datePrescribed);
+    return DateFormat.yMMMd("en_US").format(_datePrescribed);
+  }
+
+  String _taperString() {
+    if (_taper.amount == 0.0 || _taper.days == 0) {
+      return 'None';
+    }
+    return '-${_taper.amount} every ${_taper.days} days';
   }
 
   Future<Null> _selectDate(BuildContext context) async {
@@ -57,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<Null> _selectPrescribed(BuildContext context) async {
+  Future<Null> _selectPrescribed(BuildContext cntext) async {
     int selected = _numberPrescribed;
     final bool entered = await showDialog<bool>(
       context: context,
@@ -70,8 +99,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 keyboardType: TextInputType.number,
                 autofocus: true,
                 onChanged: (n) => selected = int.tryParse(n) ?? 0,
+                onSubmitted: (_) {
+                  Navigator.pop(context, true);
+                },
                 decoration: new InputDecoration(
-                    labelText: '# Prescribed',),
+                    labelText: 'Total Pills Prescribed',),
               ),
             )
           ],
@@ -103,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final bool entered = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        contentPadding: const EdgeInsets.all(16.0),
+        contentPadding: const EdgeInsets.all(10.0),
         content: new Row(
           children: <Widget>[
             new Expanded(
@@ -112,7 +144,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 autofocus: true,
                 onChanged: (n) => selected = double.tryParse(n) ?? 0,
                 decoration: new InputDecoration(
-                    labelText: 'Per Day', hintText: '1.5'),
+                    labelText: 'Avg. Dose Per Day'),
+                onSubmitted: (_) {
+                  Navigator.pop(context, true);
+                },
               ),
             )
           ],
@@ -142,22 +177,29 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: new AppBar(
-        title: new Text(widget.title),
-      ),
       body: new Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Center(
               child: ListView(
               shrinkWrap: true,
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(5.0),
                 children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text('Refill Calculator',
+                        style: TextStyle(
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold,
+                          height: 0.0
+                        ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   ListTile(
-                    title: Text('Date Prescribed'),
+                    title: Text('Prescribed'),
                     onTap: () => _selectDate(context),
-                    subtitle: Text(_dateString(_datePrescribed)),
-                    trailing: IconButton(
+                    leading: IconButton(
                       icon: Icon(
                         Icons.calendar_today,
                         color: Colors.blue,
@@ -165,25 +207,31 @@ class _MyHomePageState extends State<MyHomePage> {
                       tooltip: 'Select Date',
                       onPressed: () => _selectDate(context),
                     ),
+                    trailing: Text(_dateString(_datePrescribed), style: _inputStyle(),)
                   ),
-                  ListTile(
-                    title: Text('Total Pills'),
-                    subtitle: Text('$_numberPrescribed'),
-                    onTap: () => _selectPrescribed(context),
-                    trailing: IconButton(
-                      icon: Icon(
-                        Icons.local_hospital,
-                        color: Colors.blue,
+                  Container(
+                    child: ListTile(
+                      title: Text('Total Pills'),
+                      trailing: Text('$_numberPrescribed', style: _inputStyle(),),
+                      onTap: () => _selectPrescribed(context),
+                      leading: IconButton(
+                        icon: Icon(
+                          Icons.local_hospital,
+                          color: Colors.blue,
+                        ),
+                        tooltip: 'Select Total Pills Prescribed',
+                        onPressed: () => _selectPrescribed(context),
                       ),
-                      tooltip: 'Select Total Pills Prescribed',
-                      onPressed: () => _selectPrescribed(context),
                     ),
                   ),
                   ListTile(
                     title: Text('Dose Per Day'),
-                    subtitle: Text('$_dosePerDay'),
+                    trailing: Text(
+                        '$_dosePerDay',
+                        style: _inputStyle(),
+                    ),
                     onTap: () => _selectDose(context),
-                    trailing: IconButton(
+                    leading: IconButton(
                       icon: Icon(
                         Icons.timer,
                         color: Colors.blue,
@@ -193,16 +241,35 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   ListTile(
-                    title: Text('Remaining'),
-                    subtitle: Text('${_numberRemaining()}'),
-                    onTap: () => _selectDose(context),
-                    trailing: IconButton(
+                    title: Text('Taper'),
+                    trailing: Text(
+                      '${_taperString()}',
+                      style: _inputStyle(),
+                    ),
+                    onTap: () async {
+                      var newTaper = await selectTaper(context, _taper);
+                      setState(() {
+                        _taper = newTaper;
+                      });
+                    },
+                    leading: IconButton(
+                      icon: Icon(
+                        Icons.trending_down,
+                        color: Colors.blue,
+                      ),
+                      tooltip: 'Select Taper',
+                      onPressed: () => _selectPrescribed(context),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Remaining', style: _resultStyle()),
+                    trailing: Text('${_numberRemaining()}', style: _resultStyle()),
+                    leading: IconButton(
                       icon: Icon(
                         _numberRemaining() > 0 ? Icons.check_circle : Icons.warning,
                         color: _numberRemaining() > 0 ? Colors.green : Colors.red,
                       ),
-                      tooltip: 'Select Dose',
-                      onPressed: () => _selectPrescribed(context),
+                      tooltip: 'Remaining',
                     ),
                   ),
                 ],
