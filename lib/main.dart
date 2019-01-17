@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:duration/duration.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
@@ -65,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String _taperString() {
-    if (_taper.amount == 0.0 || _taper.days == 0) {
+    if (_taper.amount == 0.0 || _taper?.days == null || _taper.days == 0) {
       return 'None';
     }
     return '-${_taper.amount} every ${_taper.days} days';
@@ -75,8 +74,9 @@ class _MyHomePageState extends State<MyHomePage> {
     final DateTime picked = await showDatePicker(
       context: context,
       initialDate: _datePrescribed,
-      firstDate: new DateTime(new DateTime.now().year),
+      firstDate: new DateTime(new DateTime.now().year - 1),
       lastDate: new DateTime(new DateTime.now().year + 1),
+      selectableDayPredicate: (DateTime val) => val.isBefore(new DateTime.now()),
     );
 
     if (picked != null && picked != _datePrescribed) {
@@ -201,7 +201,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onTap: () => _selectDate(context),
                     leading: IconButton(
                       icon: Icon(
-                        Icons.calendar_today,
+                        Icons.event_note,
                         color: Colors.blue,
                       ),
                       tooltip: 'Select Date',
