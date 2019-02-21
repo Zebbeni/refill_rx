@@ -17,7 +17,7 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
   TextEditingController daysController = new TextEditingController();
 
   void _setAmount() => selected.amount = double.tryParse(amountController.text) ?? 0.0;
-  void _setDays() => selected.days = int.tryParse(daysController.text) ?? 0;
+  void _setDays() => selected.days = int.tryParse(daysController.text) ?? 1;
 
   amountController.addListener(_setAmount);
   amountController.addListener(_setDays);
@@ -34,9 +34,8 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
               controller: amountController,
               decoration: new InputDecoration(
                   labelText: 'Decrease by',
-                isDense: true,
+                  isDense: true,
               ),
-              initialValue: '${currentTaper.amount}',
               keyboardType: TextInputType.numberWithOptions(decimal: true),
               textAlign: TextAlign.center,
             ),
@@ -50,7 +49,6 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
                   suffixText: 'day(s)',
                 isDense: true,
               ),
-              initialValue: '${currentTaper.days != null}',
               keyboardType: TextInputType.numberWithOptions(),
               textAlign: TextAlign.center,
             ),

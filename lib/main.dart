@@ -1,11 +1,32 @@
 import 'dart:async';
+import 'dart:math';
 
+import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'package:refill_rx/chart.dart';
 import 'package:refill_rx/taper_duration_popup.dart';
 
-void main() => runApp(new MyApp());
+void main() {
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+  runApp(new MyApp());
+}
+
+class TimelinePoint {
+  final DateTime time;
+  final double prescriptionRemaining;
+
+  TimelinePoint(this.time, this.prescriptionRemaining);
+
+  @override
+  String toString() {
+    return "${DateFormat.yMMMd("en_US").format(time)}: $prescriptionRemaining";
+  }
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -34,13 +55,78 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   DateTime _datePrescribed = new DateTime.now();
+  DateTime _dateEmpty;
   int _numberPrescribed = 0;
+  double _currentRemaining = 0;
   double _dosePerDay = 0.0;
-  Taper _taper = new Taper(0, 0);
+  Taper _taper = new Taper(1, 0);
+  DateTime _today = new DateTime(
+      new DateTime.now().year,
+      new DateTime.now().month,
+      new DateTime.now().day,
+  );
+
+  /// Create one series with sample hard coded data.
+  List<charts.Series<TimelinePoint, DateTime>> _calcTimelineData() {
+    final timelinePoints = new List<TimelinePoint>();
+    DateTime _date = _datePrescribed;
+
+    double _rateOfDecrease = _dosePerDay;
+    double _prescriptionRemaining = _numberPrescribed.toDouble();
+    int _daysUntilRateChange = _taper.days;
+
+    _dateEmpty = null; // reset dateEmpty to null
+
+    while(_prescriptionRemaining > 0 && _rateOfDecrease > 0) {
+      timelinePoints.add(new TimelinePoint(_date, _prescriptionRemaining));
+      _prescriptionRemaining = max(_prescriptionRemaining - _rateOfDecrease, 0);
+      _date = _date.add(new Duration(days: 1));
+      _daysUntilRateChange--;
+      if (_daysUntilRateChange == 0) {
+        _rateOfDecrease = max(_rateOfDecrease - _taper.amount, 0);
+        _daysUntilRateChange = _taper.days;
+      }
+      if (_date.isAtSameMomentAs(_today)) {
+        _currentRemaining = _prescriptionRemaining;
+      }
+    }
+
+    timelinePoints.add(new TimelinePoint(_date, _prescriptionRemaining));
+
+    if (_prescriptionRemaining == 0) {
+      _dateEmpty = _date;
+    }
+
+    if (_date.isBefore(_today)) {
+      timelinePoints.add(new TimelinePoint(_today, _prescriptionRemaining));
+      _currentRemaining = _prescriptionRemaining;
+    }
+
+      return [
+        new charts.Series<TimelinePoint, DateTime>(
+          id: 'PrescriptionTimeline',
+          colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+          domainFn: (TimelinePoint point, _) => point.time,
+          measureFn: (TimelinePoint point, _) => point.prescriptionRemaining,
+          data: timelinePoints,
+        )];
+  }
+
+  String _resultText() {
+    if (_dateEmpty != null) {
+      if (_dateEmpty.isAfter(_today)) {
+        return "${_dateEmpty.difference(_today).inDays} Days Left";
+      } else {
+        return "${_today.difference(_dateEmpty).inDays} Days Overdue";
+      }
+    } else {
+      return "${_currentRemaining} remain, overflow likely";
+    }
+  }
 
   TextStyle _resultStyle() {
     return TextStyle(
-      color: _numberRemaining() > 0 ? Colors.green : Colors.red,
+      color: _currentRemaining > 0 ? Colors.green : Colors.red,
       fontWeight: FontWeight.bold,
       fontSize: 22.0,
     );
@@ -54,13 +140,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  double _numberRemaining() {
-    int daysPassed = new DateTime.now().difference(_datePrescribed).inDays;
-    return _numberPrescribed - (daysPassed * _dosePerDay);
-  }
-
   String _dateString(DateTime dateTime) {
-    return DateFormat.yMMMd("en_US").format(_datePrescribed);
+    return DateFormat.yMMMd("en_US").format(dateTime);
   }
 
   String _taperString() {
@@ -70,12 +151,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return '-${_taper.amount} every ${_taper.days} days';
   }
 
+  bool _canGraph() => _dosePerDay > 0 && _numberPrescribed > 0.0;
+
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
       context: context,
       initialDate: _datePrescribed,
-      firstDate: new DateTime(new DateTime.now().year - 1),
-      lastDate: new DateTime(new DateTime.now().year + 1),
+      firstDate: new DateTime(_today.year - 1),
+      lastDate: new DateTime(_today.year + 1),
       selectableDayPredicate: (DateTime val) => val.isBefore(new DateTime.now()),
     );
 
@@ -123,7 +206,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
 
-    if (entered && selected != null && selected != _numberPrescribed) {
+    if (entered == true && selected != null && selected != _numberPrescribed) {
       setState(() {
         _numberPrescribed = selected;
       });
@@ -205,22 +288,22 @@ class _MyHomePageState extends State<MyHomePage> {
                         color: Colors.blue,
                       ),
                       tooltip: 'Select Date',
-                      onPressed: () => _selectDate(context),
+                      onPressed: () => {},
                     ),
                     trailing: Text(_dateString(_datePrescribed), style: _inputStyle(),)
                   ),
                   Container(
                     child: ListTile(
                       title: Text('Total Pills'),
-                      trailing: Text('$_numberPrescribed', style: _inputStyle(),),
                       onTap: () => _selectPrescribed(context),
+                      trailing: Text('$_numberPrescribed', style: _inputStyle(),),
                       leading: IconButton(
                         icon: Icon(
                           Icons.local_hospital,
                           color: Colors.blue,
                         ),
+                        onPressed: () => {},
                         tooltip: 'Select Total Pills Prescribed',
-                        onPressed: () => _selectPrescribed(context),
                       ),
                     ),
                   ),
@@ -262,16 +345,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   ListTile(
-                    title: Text('Remaining', style: _resultStyle()),
-                    trailing: Text('${_numberRemaining()}', style: _resultStyle()),
+                    title: Text(_resultText(), style: _resultStyle()),
+//                    trailing: Text('${_currentRemaining}', style: _resultStyle()),
                     leading: IconButton(
                       icon: Icon(
-                        _numberRemaining() > 0 ? Icons.check_circle : Icons.warning,
-                        color: _numberRemaining() > 0 ? Colors.green : Colors.red,
+                        _currentRemaining > 0 ? Icons.check_circle : Icons.warning,
+                        color: _currentRemaining > 0 ? Colors.green : Colors.red,
                       ),
+                      onPressed: () => {},
                       tooltip: 'Remaining',
                     ),
                   ),
+                  _canGraph() ? new SimpleTimeSeriesChart(
+                      _calcTimelineData(),
+                      _today,
+                  ): new Center(),
                 ],
               ),
             ),
