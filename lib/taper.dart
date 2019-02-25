@@ -11,7 +11,7 @@ class Taper {
 }
 
 Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
-  Taper selected = currentTaper;
+  Taper selected = new Taper(currentTaper.days, currentTaper.amount);
 
   TextEditingController amountController = new TextEditingController();
   TextEditingController daysController = new TextEditingController();
@@ -22,7 +22,7 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
   amountController.addListener(_setAmount);
   amountController.addListener(_setDays);
 
-  final bool entered = await showDialog<bool>(
+  var entered = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       contentPadding: const EdgeInsets.all(10.0),
@@ -72,8 +72,9 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
     ),
   );
 
-  if (entered && selected.days != null && selected.amount != null) {
-      return selected;
+  if (entered == true && selected.days != null && selected.amount != null) {
+    selected.amount = selected.amount.abs(); // don't allow negatives
+    return selected;
   }
   return currentTaper;
 }

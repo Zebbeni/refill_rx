@@ -1,11 +1,24 @@
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
-class SimpleTimeSeriesChart extends StatelessWidget {
-  final List<charts.Series> seriesList;
-  final DateTime today;
+class TimelinePoint {
+  final DateTime time;
+  final double prescriptionRemaining;
 
-  SimpleTimeSeriesChart(this.seriesList, this.today);
+  TimelinePoint(this.time, this.prescriptionRemaining);
+
+  @override
+  String toString() {
+    return "${DateFormat.yMMMd("en_US").format(time)}: $prescriptionRemaining";
+  }
+}
+
+class SimpleTimeSeriesChart extends StatelessWidget {
+  final DateTime _today;
+  final List<charts.Series<TimelinePoint, DateTime>> _chartData;
+
+  SimpleTimeSeriesChart(this._today, this._chartData);
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +26,7 @@ class SimpleTimeSeriesChart extends StatelessWidget {
       height: 125,
       margin: const EdgeInsets.all(10.0),
       child: charts.TimeSeriesChart(
-        seriesList,
+        _chartData,
         animate: true,
         selectionModels: [
           new charts.SelectionModelConfig(
@@ -23,7 +36,7 @@ class SimpleTimeSeriesChart extends StatelessWidget {
         behaviors: [
           new charts.SelectNearest(),
           new charts.InitialSelection(selectedDataConfig: [
-            new charts.SeriesDatumConfig<DateTime>("PrescriptionTimeline", today)
+            new charts.SeriesDatumConfig<DateTime>("PrescriptionTimeline", _today)
           ])
         ],
         // Optionally pass in a [DateTimeFactory] used by the chart. The factory
