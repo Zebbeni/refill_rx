@@ -2,19 +2,33 @@ import 'dart:async';
 
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-void main() => runApp(new MyApp());
+import 'package:refill_rx/date_prescribed.dart';
+import 'package:refill_rx/dose.dart';
+import 'package:refill_rx/prescribed.dart';
+import 'package:refill_rx/result.dart';
+import 'package:refill_rx/taper.dart';
+
+void main() {
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+  runApp(new MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Refill RX',
       theme: new ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Arial',
       ),
-      home: new MyHomePage(title: 'Refill Calculator'),
+      home: new MyHomePage(title: 'Refill RX'),
     );
   }
 }
@@ -32,179 +46,140 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime _datePrescribed = new DateTime.now();
   int _numberPrescribed = 0;
   double _dosePerDay = 0.0;
+  Taper _taper = new Taper(1, 0);
+  DateTime _today;
 
-  double _numberRemaining() {
-    int daysPassed = new DateTime.now().difference(_datePrescribed).inDays;
-    return _numberPrescribed - (daysPassed * _dosePerDay);
+  TextStyle _inputStyle() {
+    return TextStyle(
+      color: Colors.blue,
+      fontWeight: FontWeight.bold,
+      fontSize: 17.0,
+    );
   }
 
   String _dateString(DateTime dateTime) {
-    return DateFormat.yMMMMd("en_US").format(_datePrescribed);
+    return DateFormat.yMMMd("en_US").format(dateTime);
   }
 
-  Future<Null> _selectDate(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
-      context: context,
-      initialDate: _datePrescribed,
-      firstDate: new DateTime(new DateTime.now().year),
-      lastDate: new DateTime(new DateTime.now().year + 1),
-    );
-
-    if (picked != null && picked != _datePrescribed) {
-      setState(() {
-        _datePrescribed = picked;
-      });
+  String _taperString() {
+    if (_taper.amount == 0.0 || _taper?.days == null || _taper.days == 0) {
+      return 'None';
     }
+    return '-${_taper.amount} every ${_taper.days} days';
   }
 
-  Future<Null> _selectPrescribed(BuildContext context) async {
-    int selected = _numberPrescribed;
-    final bool entered = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        contentPadding: const EdgeInsets.all(16.0),
-        content: new Row(
-          children: <Widget>[
-            new Expanded(
-              child: new TextField(
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                onChanged: (n) => selected = int.tryParse(n) ?? 0,
-                decoration: new InputDecoration(
-                    labelText: '# Prescribed',),
-              ),
-            )
-          ],
-        ),
-        actions: <Widget>[
-          new FlatButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context, false);
-              }),
-          new FlatButton(
-              child: const Text('ENTER'),
-              onPressed: () {
-                Navigator.pop(context, true);
-              })
-        ],
-      ),
-    );
+  bool _canGraph() => _dosePerDay > 0 && _numberPrescribed > 0.0;
 
-    if (entered && selected != null && selected != _numberPrescribed) {
-      setState(() {
-        _numberPrescribed = selected;
-      });
-    }
-  }
-
-  Future<Null> _selectDose(BuildContext context) async {
-    double selected = _dosePerDay;
-    final bool entered = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        contentPadding: const EdgeInsets.all(16.0),
-        content: new Row(
-          children: <Widget>[
-            new Expanded(
-              child: new TextField(
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                autofocus: true,
-                onChanged: (n) => selected = double.tryParse(n) ?? 0,
-                decoration: new InputDecoration(
-                    labelText: 'Per Day', hintText: '1.5'),
-              ),
-            )
-          ],
-        ),
-        actions: <Widget>[
-          new FlatButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context, false);
-              }),
-          new FlatButton(
-              child: const Text('ENTER'),
-              onPressed: () {
-                Navigator.pop(context, true);
-              })
-        ],
-      ),
-    );
-
-    if (entered && selected != null && selected != _dosePerDay) {
-      setState(() {
-        _dosePerDay = selected;
-      });
-    }
+  Future _updateTaper() async {
+    var newTaper = await selectTaper(context, _taper);
+    setState(() {
+      _taper = newTaper;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    var now = new DateTime.now();
+    _today = new DateTime(now.year, now.month, now.day,);
     return new Scaffold(
-      appBar: new AppBar(
-        title: new Text(widget.title),
-      ),
       body: new Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Center(
               child: ListView(
               shrinkWrap: true,
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(5.0),
                 children: <Widget>[
-                  ListTile(
-                    title: Text('Date Prescribed'),
-                    onTap: () => _selectDate(context),
-                    subtitle: Text(_dateString(_datePrescribed)),
-                    trailing: IconButton(
-                      icon: Icon(
-                        Icons.calendar_today,
-                        color: Colors.blue,
-                      ),
-                      tooltip: 'Select Date',
-                      onPressed: () => _selectDate(context),
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text('Refill Calculator',
+                        style: TextStyle(
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold,
+                          height: 0.0
+                        ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   ListTile(
-                    title: Text('Total Pills'),
-                    subtitle: Text('$_numberPrescribed'),
-                    onTap: () => _selectPrescribed(context),
-                    trailing: IconButton(
+                    title: Text('Prescribed'),
+                    onTap: () async {
+                      var selected = await selectDate(context, _today, _datePrescribed);
+                      setState(() {
+                        _datePrescribed = selected;
+                      });
+                    },
+                    leading: IconButton(
+                      icon: Icon(
+                        Icons.event_note,
+                        color: Colors.blue,
+                      ),
+                      tooltip: 'Select Date',
+                      onPressed: () => {},
+                    ),
+                    trailing: Text(_dateString(_datePrescribed), style: _inputStyle(),)
+                  ),
+                  ListTile(
+                    title: Text('Initial Amount'),
+                    onTap: () async {
+                      int selected = await selectPrescribed(context, _numberPrescribed);
+                      setState(() {
+                        _numberPrescribed = selected;
+                      });
+                    },
+                    trailing: Text('$_numberPrescribed', style: _inputStyle(),),
+                    leading: IconButton(
                       icon: Icon(
                         Icons.local_hospital,
                         color: Colors.blue,
                       ),
+                      onPressed: () => {},
                       tooltip: 'Select Total Pills Prescribed',
-                      onPressed: () => _selectPrescribed(context),
                     ),
                   ),
                   ListTile(
                     title: Text('Dose Per Day'),
-                    subtitle: Text('$_dosePerDay'),
-                    onTap: () => _selectDose(context),
-                    trailing: IconButton(
+                    trailing: Text('$_dosePerDay', style: _inputStyle()),
+                    onTap: () async {
+                      var dose = await selectDose(context, _dosePerDay);
+                      setState(() {
+                        _dosePerDay = dose;
+                      });
+                    },
+                    leading: IconButton(
                       icon: Icon(
                         Icons.timer,
                         color: Colors.blue,
                       ),
                       tooltip: 'Select Dose',
-                      onPressed: () => _selectPrescribed(context),
+                      onPressed: () async {
+                        var dose = await selectDose(context, _dosePerDay);
+                        setState(() {
+                          _dosePerDay = dose;
+                        });
+                      },
                     ),
                   ),
                   ListTile(
-                    title: Text('Remaining'),
-                    subtitle: Text('${_numberRemaining()}'),
-                    onTap: () => _selectDose(context),
-                    trailing: IconButton(
+                    title: Text('Taper'),
+                    trailing: Text('${_taperString()}', style: _inputStyle()),
+                    onTap: _updateTaper,
+                    leading: IconButton(
                       icon: Icon(
-                        _numberRemaining() > 0 ? Icons.check_circle : Icons.warning,
-                        color: _numberRemaining() > 0 ? Colors.green : Colors.red,
+                        Icons.trending_down,
+                        color: Colors.blue,
                       ),
-                      tooltip: 'Select Dose',
-                      onPressed: () => _selectPrescribed(context),
+                      tooltip: 'Select Taper',
+                      onPressed: _updateTaper,
                     ),
                   ),
+                  _canGraph() ? new Result(
+                    _today,
+                    _datePrescribed,
+                    _numberPrescribed,
+                    _dosePerDay,
+                    _taper,
+                  ): new Center(),
                 ],
               ),
             ),
