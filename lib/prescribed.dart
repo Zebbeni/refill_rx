@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Displays a popup to enter an amount of medication prescribed
+/// Displays a popup to prompting the user to select an amount prescribed
 Future<int> selectPrescribed(BuildContext context, int numberPrescribed) async {
   int selected = numberPrescribed;
   TextEditingController prescribedController = new TextEditingController();
