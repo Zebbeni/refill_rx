@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Taper {
@@ -16,61 +17,79 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
   TextEditingController amountController = new TextEditingController();
   TextEditingController daysController = new TextEditingController();
 
-  void _setAmount() => selected.amount = double.tryParse(amountController.text) ?? 0.0;
-  void _setDays() => selected.days = int.tryParse(daysController.text) ?? 1;
+  void _setAmount() {
+    selected.amount = double.tryParse(amountController.text) ?? 0.0;
+  }
+
+  void _setDays() {
+    selected.days = int.tryParse(daysController.text) ?? 1;
+  }
 
   amountController.addListener(_setAmount);
-  amountController.addListener(_setDays);
+  daysController.addListener(_setDays);
 
   var entered = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      contentPadding: const EdgeInsets.all(10.0),
-      content: new Row(
-        children: <Widget>[
-          new Expanded(
-            child: new TextFormField(
-              autofocus: true,
-              controller: amountController,
-              decoration: new InputDecoration(
-                  labelText: 'Decrease by',
-                  isDense: true,
+      context: context,
+      builder: (context) => AlertDialog(
+            title: new Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: new Text(
+                'Taper',
+                style: TextStyle(
+                    fontSize: 20.0, fontWeight: FontWeight.bold, height: 0.0),
+                textAlign: TextAlign.center,
               ),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.center,
             ),
-          ),
-          new Expanded(
-            child: new TextFormField(
-              autofocus: true,
-              controller: daysController,
-              decoration: new InputDecoration(
-                  labelText: 'Every',
-                  suffixText: 'day(s)',
-                isDense: true,
+            content: new Container(
+              child: new ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(top: 0.0, bottom: 0.0),
+                children: <Widget>[
+                  ListTile(
+                    title: Text('Decrease by'),
+                    trailing: new SizedBox(
+                      width: 65.0,
+                      child: new CupertinoTextField(
+                        autofocus: true,
+                        controller: amountController,
+                        keyboardType:
+                            TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        textInputAction: TextInputAction.done,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Every'),
+                    trailing: new SizedBox(
+                      width: 65.0,
+                      child: new CupertinoTextField(
+                        controller: daysController,
+                        placeholder: 'day(s)',
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        textInputAction: TextInputAction.done,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              keyboardType: TextInputType.numberWithOptions(),
-              textAlign: TextAlign.center,
             ),
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        new FlatButton(
-            child: const Text('CANCEL'),
-            onPressed: () {
-              Navigator.pop(context, false);
-            }),
-        new FlatButton(
-            child: const Text('ENTER'),
-            onPressed: () {
-              _setAmount();
-              _setDays();
-              Navigator.pop(context, true);
-            })
-      ],
-    ),
-  );
+            actions: <Widget>[
+              new FlatButton(
+                  child: const Text('CANCEL'),
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  }),
+              new FlatButton(
+                  child: const Text('ENTER'),
+                  onPressed: () {
+                    _setAmount();
+                    _setDays();
+                    Navigator.pop(context, true);
+                  })
+            ],
+          ));
 
   if (entered == true && selected.days != null && selected.amount != null) {
     selected.amount = selected.amount.abs(); // don't allow negatives
