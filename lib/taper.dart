@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Taper {
@@ -16,7 +17,8 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
   TextEditingController amountController = new TextEditingController();
   TextEditingController daysController = new TextEditingController();
 
-  void _setAmount() => selected.amount = double.tryParse(amountController.text) ?? 0.0;
+  void _setAmount() =>
+      selected.amount = double.tryParse(amountController.text) ?? 0.0;
   void _setDays() => selected.days = int.tryParse(daysController.text) ?? 1;
 
   amountController.addListener(_setAmount);
@@ -25,35 +27,50 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
   var entered = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      contentPadding: const EdgeInsets.all(10.0),
-      content: new Row(
-        children: <Widget>[
-          new Expanded(
-            child: new TextFormField(
-              autofocus: true,
-              controller: amountController,
-              decoration: new InputDecoration(
-                  labelText: 'Decrease by',
-                  isDense: true,
+      title: new Padding(
+        padding: const EdgeInsets.only(top: 10.0),
+        child: new Text(
+          'Taper',
+          style: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+              height: 0.0),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      content: new Container(
+        height: 100.0,
+        width: double.maxFinite,
+        child: new ListView(
+            children: <Widget>[
+              ListTile(
+                title: Text('Decrease by'),
+                trailing: new SizedBox(
+                  width: 50.0,
+                  child: new CupertinoTextField(
+                    autofocus: true,
+                    controller: amountController,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    textAlign: TextAlign.center,
+                    textInputAction: TextInputAction.done,
+                  ),
+                ),
               ),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          new Expanded(
-            child: new TextFormField(
-              autofocus: true,
-              controller: daysController,
-              decoration: new InputDecoration(
-                  labelText: 'Every',
-                  suffixText: 'day(s)',
-                isDense: true,
+              ListTile(
+                title: Text('Every'),
+                trailing: new SizedBox(
+                  width: 100.0,
+                  child: new CupertinoTextField(
+                    controller: daysController,
+                    placeholder: 'day(s)',
+                    keyboardType: TextInputType.numberWithOptions(),
+                    textAlign: TextAlign.center,
+                    textInputAction: TextInputAction.done,
+                  ),
+                ),
               ),
-              keyboardType: TextInputType.numberWithOptions(),
-              textAlign: TextAlign.center,
-            ),
+            ],
           ),
-        ],
       ),
       actions: <Widget>[
         new FlatButton(
@@ -69,7 +86,7 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
               Navigator.pop(context, true);
             })
       ],
-    ),
+    )
   );
 
   if (entered == true && selected.days != null && selected.amount != null) {

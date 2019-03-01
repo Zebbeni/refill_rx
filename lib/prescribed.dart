@@ -19,6 +19,7 @@ Future<int> selectPrescribed(BuildContext context, int numberPrescribed) async {
               },
               decoration: new InputDecoration(
                 labelText: 'Total Prescribed',),
+              textInputAction: TextInputAction.next,
             ),
           )
         ],

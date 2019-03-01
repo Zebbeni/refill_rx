@@ -80,54 +80,66 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     var now = new DateTime.now();
-    _today = new DateTime(now.year, now.month, now.day,);
+    _today = new DateTime(
+      now.year,
+      now.month,
+      now.day,
+    );
     return new Scaffold(
-      body: new Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Center(
-              child: ListView(
-              shrinkWrap: true,
-                padding: const EdgeInsets.all(5.0),
+      resizeToAvoidBottomPadding: false,
+      body: new SafeArea(
+        child: new Center(
+          child: new Stack(
+            children: [
+              new ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(10.0),
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Text('Refill Calculator',
-                        style: TextStyle(
+                    padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
+                    child: Text(
+                      'Refill Calculator',
+                      style: TextStyle(
                           fontSize: 30.0,
                           fontWeight: FontWeight.bold,
-                          height: 0.0
-                        ),
+                          height: 0.0),
                       textAlign: TextAlign.center,
                     ),
                   ),
                   ListTile(
+                      title: Text('Start Date'),
+                      onTap: () async {
+                        var selected =
+                            await selectDate(context, _today, _datePrescribed);
+                        setState(() {
+                          _datePrescribed = selected;
+                        });
+                      },
+                      leading: IconButton(
+                        icon: Icon(
+                          Icons.event_note,
+                          color: Colors.blue,
+                        ),
+                        tooltip: 'Select Date',
+                        onPressed: () => {},
+                      ),
+                      trailing: Text(
+                        _dateString(_datePrescribed),
+                        style: _inputStyle(),
+                      )),
+                  ListTile(
                     title: Text('Prescribed'),
                     onTap: () async {
-                      var selected = await selectDate(context, _today, _datePrescribed);
-                      setState(() {
-                        _datePrescribed = selected;
-                      });
-                    },
-                    leading: IconButton(
-                      icon: Icon(
-                        Icons.event_note,
-                        color: Colors.blue,
-                      ),
-                      tooltip: 'Select Date',
-                      onPressed: () => {},
-                    ),
-                    trailing: Text(_dateString(_datePrescribed), style: _inputStyle(),)
-                  ),
-                  ListTile(
-                    title: Text('Initial Amount'),
-                    onTap: () async {
-                      int selected = await selectPrescribed(context, _numberPrescribed);
+                      int selected =
+                          await selectPrescribed(context, _numberPrescribed);
                       setState(() {
                         _numberPrescribed = selected;
                       });
                     },
-                    trailing: Text('$_numberPrescribed', style: _inputStyle(),),
+                    trailing: Text(
+                      '$_numberPrescribed',
+                      style: _inputStyle(),
+                    ),
                     leading: IconButton(
                       icon: Icon(
                         Icons.local_hospital,
@@ -138,8 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   ListTile(
-                    title: Text('Dose Per Day'),
-                    trailing: Text('$_dosePerDay', style: _inputStyle()),
+                    title: Text('Initial Dose'),
+                    trailing: Text('$_dosePerDay / day', style: _inputStyle()),
                     onTap: () async {
                       var dose = await selectDose(context, _dosePerDay);
                       setState(() {
@@ -173,18 +185,21 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: _updateTaper,
                     ),
                   ),
-                  _canGraph() ? new Result(
-                    _today,
-                    _datePrescribed,
-                    _numberPrescribed,
-                    _dosePerDay,
-                    _taper,
-                  ): new Center(),
+                  _canGraph()
+                      ? new Result(
+                          _today,
+                          _datePrescribed,
+                          _numberPrescribed,
+                          _dosePerDay,
+                          _taper,
+                        )
+                      : new Center(),
                 ],
-              ),
-            ),
-          ],
-      )
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
