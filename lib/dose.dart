@@ -7,16 +7,22 @@ Future<double> selectDose(BuildContext context, double dosePerDay) async {
   final bool entered = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-          contentPadding: const EdgeInsets.all(10.0),
+          title: new Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            child: new Text(
+              'Dose',
+              style: TextStyle(
+                  fontSize: 20.0, fontWeight: FontWeight.bold, height: 0.0),
+              textAlign: TextAlign.center,
+            ),
+          ),
           content: new Row(
             children: <Widget>[
               new Expanded(
                 child: new CupertinoTextField(
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: TextInputType.numberWithOptions(decimal: false),
                   autofocus: true,
                   onChanged: (n) => selected = double.tryParse(n) ?? 0,
-//              decoration: new InputDecoration(
-//                  labelText: 'Avg. Dose Per Day'),
                   onSubmitted: (_) {
                     Navigator.pop(context, true);
                   },
@@ -25,7 +31,7 @@ Future<double> selectDose(BuildContext context, double dosePerDay) async {
                   },
                   textInputAction: TextInputAction.done,
                 ),
-              )
+              ),
             ],
           ),
           actions: <Widget>[
@@ -38,7 +44,7 @@ Future<double> selectDose(BuildContext context, double dosePerDay) async {
                 child: const Text('ENTER'),
                 onPressed: () {
                   Navigator.pop(context, true);
-                })
+                }),
           ],
         ),
   );

@@ -93,7 +93,6 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               new ListView(
                 shrinkWrap: true,
-                padding: const EdgeInsets.all(10.0),
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
@@ -128,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         style: _inputStyle(),
                       )),
                   ListTile(
-                    title: Text('Prescribed'),
+                    title: Text('Prescription'),
                     onTap: () async {
                       int selected =
                           await selectPrescribed(context, _numberPrescribed);
@@ -150,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   ListTile(
-                    title: Text('Initial Dose'),
+                    title: Text('Dose'),
                     trailing: Text('$_dosePerDay / day', style: _inputStyle()),
                     onTap: () async {
                       var dose = await selectDose(context, _dosePerDay);

@@ -17,9 +17,12 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
   TextEditingController amountController = new TextEditingController();
   TextEditingController daysController = new TextEditingController();
 
-  void _setAmount() =>
+  void _setAmount() {
       selected.amount = double.tryParse(amountController.text) ?? 0.0;
-  void _setDays() => selected.days = int.tryParse(daysController.text) ?? 1;
+  }
+  void _setDays() {
+    selected.days = int.tryParse(daysController.text) ?? 1;
+  }
 
   amountController.addListener(_setAmount);
   amountController.addListener(_setDays);
@@ -39,14 +42,14 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
         ),
       ),
       content: new Container(
-        height: 100.0,
-        width: double.maxFinite,
         child: new ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(top: 0.0, bottom: 0.0),
             children: <Widget>[
               ListTile(
                 title: Text('Decrease by'),
                 trailing: new SizedBox(
-                  width: 50.0,
+                  width: 65.0,
                   child: new CupertinoTextField(
                     autofocus: true,
                     controller: amountController,
@@ -59,7 +62,7 @@ Future<Taper> selectTaper(BuildContext context, Taper currentTaper) async {
               ListTile(
                 title: Text('Every'),
                 trailing: new SizedBox(
-                  width: 100.0,
+                  width: 65.0,
                   child: new CupertinoTextField(
                     controller: daysController,
                     placeholder: 'day(s)',
