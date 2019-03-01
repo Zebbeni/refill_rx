@@ -65,7 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_taper.amount == 0.0 || _taper?.days == null || _taper.days == 0) {
       return 'None';
     }
-    return '-${_taper.amount} every ${_taper.days} days';
+    var daysString = _taper.days > 1 ? '${_taper.days} days' : 'day';
+    return '-${_taper.amount} every $daysString';
   }
 
   bool _canGraph() => _dosePerDay > 0 && _numberPrescribed > 0.0;
@@ -92,6 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: new Stack(
             children: [
               new ListView(
+                padding: const EdgeInsets.all(10.0),
                 shrinkWrap: true,
                 children: <Widget>[
                   Padding(

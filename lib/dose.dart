@@ -1,9 +1,14 @@
 import 'package:flutter/cupertino.dart';
-
 import 'package:flutter/material.dart';
 
 Future<double> selectDose(BuildContext context, double dosePerDay) async {
   double selected = dosePerDay;
+  TextEditingController doseController = new TextEditingController();
+  void _setDose() {
+    selected = double.tryParse(doseController.text) ?? 0.0;
+  }
+  doseController.addListener(_setDose);
+
   final bool entered = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -16,23 +21,27 @@ Future<double> selectDose(BuildContext context, double dosePerDay) async {
               textAlign: TextAlign.center,
             ),
           ),
-          content: new Row(
-            children: <Widget>[
-              new Expanded(
-                child: new CupertinoTextField(
-                  keyboardType: TextInputType.numberWithOptions(decimal: false),
-                  autofocus: true,
-                  onChanged: (n) => selected = double.tryParse(n) ?? 0,
-                  onSubmitted: (_) {
-                    Navigator.pop(context, true);
-                  },
-                  onEditingComplete: () {
-                    Navigator.pop(context, true);
-                  },
-                  textInputAction: TextInputAction.done,
+          content: new Container(
+            child: new ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.only(top: 0.0, bottom: 0.0),
+              children: <Widget>[
+                ListTile(
+                  title: Text('Start with'),
+                  trailing: new SizedBox(
+                    width: 100.0,
+                    child: new CupertinoTextField(
+                      autofocus: true,
+                      controller: doseController,
+                      placeholder: '# per day',
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      textInputAction: TextInputAction.done,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: <Widget>[
             new FlatButton(

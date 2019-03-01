@@ -1,28 +1,48 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 /// Displays a popup to enter an amount of medication prescribed
 Future<int> selectPrescribed(BuildContext context, int numberPrescribed) async {
   int selected = numberPrescribed;
+  TextEditingController prescribedController = new TextEditingController();
+  void _setPrescribed() {
+    selected = int.tryParse(prescribedController.text) ?? 0;
+  }
+  prescribedController.addListener(_setPrescribed);
+
   final bool entered = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      contentPadding: const EdgeInsets.all(16.0),
-      content: new Row(
-        children: <Widget>[
-          new Expanded(
-            child: new TextField(
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              onChanged: (n) => selected = int.tryParse(n) ?? 0,
-              onSubmitted: (_) {
-                Navigator.pop(context, true);
-              },
-              decoration: new InputDecoration(
-                labelText: 'Total Prescribed',),
-              textInputAction: TextInputAction.next,
+      title: new Padding(
+        padding: const EdgeInsets.only(top: 10.0),
+        child: new Text(
+          'Prescription',
+          style: TextStyle(
+              fontSize: 20.0, fontWeight: FontWeight.bold, height: 0.0),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      content: new Container(
+        child: new ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(top: 0.0, bottom: 0.0),
+          children: <Widget>[
+            ListTile(
+              title: Text('Start With'),
+              trailing: new SizedBox(
+                width: 100.0,
+                child: new CupertinoTextField(
+                  autofocus: true,
+                  controller: prescribedController,
+                  placeholder: '',
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  textInputAction: TextInputAction.done,
+                ),
+              ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
       actions: <Widget>[
         new FlatButton(
