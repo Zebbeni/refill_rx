@@ -17,36 +17,54 @@ class Result extends StatelessWidget {
   double _prescriptionOverflow;
   DateTime _dateEmpty;
 
-  Result(this._today, this._datePrescribed, this._numberPrescribed, this._dosePerDay, this._taper);
+  Result(this._today, this._datePrescribed, this._numberPrescribed,
+      this._dosePerDay, this._taper);
 
   @override
   Widget build(BuildContext context) {
     var chartData = _calcTimelineData();
-    return new Center(
-      child: Column(
-        children: <Widget>[
-          ListTile(
-            title: Text(_resultText(), style: _resultStyle()),
-            leading: IconButton(
-              icon: _resultIcon(),
-              onPressed: () => {},
-              tooltip: 'Remaining',
-            ),
+    return new Column(
+      children: [
+        new PrescriptionTimelineChart(_today, chartData),
+        new ListTile(
+          title: Text(
+            _resultText(),
+            style: _resultStyle(),
+            textAlign: TextAlign.center,
           ),
-          new SimpleTimeSeriesChart(_today, chartData),
-        ],
-      ),
+          leading: IconButton(
+            icon: _resultIcon(),
+            onPressed: () => {},
+            tooltip: 'Remaining',
+          ),
+        ),
+        _dateEmpty == null
+            ? new Padding(
+                padding: EdgeInsets.only(left: 30.0, right: 30.0),
+                child: new Text(
+                  'Dose likely to reach zero \nwith ${_prescriptionOverflow.toInt()} remaining',
+                  style: TextStyle(
+                    color: _resultColor(),
+                    fontStyle: FontStyle.italic,
+                    fontSize: 14.0,
+                  ),
+                  textAlign: TextAlign.center,
+                ))
+            : new Center(),
+      ],
     );
   }
 
   String _resultText() {
     if (_dateEmpty != null) {
-      if (_dateEmpty.isAfter(_today)) {
+      if (_dateEmpty.isBefore(_today)) {
+        var daysPast = _today.difference(_dateEmpty).inDays;
+        return daysPast == 1
+            ? "$daysPast Day Overdue"
+            : "$daysPast Days Overdue";
+      } else {
         var daysUntil = _dateEmpty.difference(_today).inDays;
         return daysUntil == 1 ? "$daysUntil Day Left" : "$daysUntil Days Left";
-      } else {
-        var daysPast = _today.difference(_dateEmpty).inDays;
-        return daysPast == 1 ? "$daysPast Day Overdue" : "$daysPast Days Overdue";
       }
     } else {
       return "Overflow by $_prescriptionOverflow";
@@ -81,7 +99,9 @@ class Result extends StatelessWidget {
   /// Create one series with sample hard coded data.
   List<charts.Series<TimelinePoint, DateTime>> _calcTimelineData() {
     double _prescriptionRemaining = _numberPrescribed.toDouble();
-    List<TimelinePoint> timelinePoints = [new TimelinePoint(_datePrescribed, _prescriptionRemaining)];
+    List<TimelinePoint> timelinePoints = [
+      new TimelinePoint(_datePrescribed, _prescriptionRemaining)
+    ];
 
     _currentRemaining = _prescriptionRemaining;
     _dateEmpty = null; // reset dateEmpty to null
@@ -92,7 +112,7 @@ class Result extends StatelessWidget {
 
     // Add timeline points from the date of prescription and the date where
     // the rate of decrease becomes 0 or the prescription runs out.
-    while(_prescriptionRemaining > 0 && _rateOfDecrease > 0) {
+    while (_prescriptionRemaining > 0 && _rateOfDecrease > 0) {
       // update date
       _date = _date.add(new Duration(days: 1));
       // update prescription remaining
@@ -121,13 +141,16 @@ class Result extends StatelessWidget {
       _currentRemaining = _prescriptionRemaining;
     }
 
+    var c = _resultColor();
+
     return [
       new charts.Series<TimelinePoint, DateTime>(
         id: 'PrescriptionTimeline',
-        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+        colorFn: (_, __) => new charts.Color(r: c.red, g: c.green, b: c.blue),
         domainFn: (TimelinePoint point, _) => point.time,
         measureFn: (TimelinePoint point, _) => point.prescriptionRemaining,
         data: timelinePoints,
-      )];
+      )
+    ];
   }
 }

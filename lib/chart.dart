@@ -14,17 +14,17 @@ class TimelinePoint {
   }
 }
 
-class SimpleTimeSeriesChart extends StatelessWidget {
+class PrescriptionTimelineChart extends StatelessWidget {
   final DateTime _today;
   final List<charts.Series<TimelinePoint, DateTime>> _chartData;
 
-  SimpleTimeSeriesChart(this._today, this._chartData);
+  PrescriptionTimelineChart(this._today, this._chartData);
 
   @override
   Widget build(BuildContext context) {
     return new Container(
       height: 125,
-      margin: const EdgeInsets.all(10.0),
+      margin: const EdgeInsets.only(left: 20.0, right: 10.0),
       child: charts.TimeSeriesChart(
         _chartData,
         animate: true,
@@ -36,7 +36,7 @@ class SimpleTimeSeriesChart extends StatelessWidget {
         behaviors: [
           new charts.SelectNearest(),
           new charts.InitialSelection(selectedDataConfig: [
-            new charts.SeriesDatumConfig<DateTime>("PrescriptionTimeline", _today)
+            new charts.SeriesDatumConfig<DateTime>('PrescriptionTimeline', _today)
           ])
         ],
         // Optionally pass in a [DateTimeFactory] used by the chart. The factory

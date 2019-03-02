@@ -69,11 +69,11 @@ class _MyHomePageState extends State<MyHomePage> {
           child: new Stack(
             children: [
               new ListView(
-                padding: const EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(0.0),
                 shrinkWrap: true,
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
+                    padding: const EdgeInsets.only(top: 20.0, bottom: 10.0),
                     child: Text(
                       'Refill Calculator',
                       style: TextStyle(
@@ -169,8 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     _numberPrescribed,
                     _dosePerDay,
                     _taper,
-                  )
-                      : new Center(),
+                  ) : new Center(),
                 ],
               )
             ],
